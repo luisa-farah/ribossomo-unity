@@ -1,0 +1,17 @@
+RIBOSSOMO — por Luísa Carvalho Farah
+
+Você é um ribossomo dentro de uma célula. Leia a fita de mRNA no topo da tela e colete os aminoácidos na ordem certa para sintetizar proteínas antes que o tempo acabe — e fuja dos vírus!
+
+COMO JOGAR
+• Toda proteína começa com Met (códon AUG). Siga a cadeia indicada no HUD.
+• Proteína completa: +tempo. Aminoácido errado: −3 segundos.
+• Vírus tiram 1 vida (você tem 3). Eles ficam mais rápidos a cada proteína.
+• O jogo acaba quando o tempo zera ou as vidas acabam.
+
+Códons: Met AUG · Gly GGC · Phe UUU · Leu CUG · Ala GCC
+
+CONTROLES
+Mover: WASD / setas / analógico ou D-pad do controle Xbox
+Reiniciar: R / Select · Menu: Esc / Start
+
+Código-fonte: <link do GitHub>
