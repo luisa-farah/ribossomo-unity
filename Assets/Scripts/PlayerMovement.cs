@@ -9,21 +9,37 @@ public class PlayerMovement : MonoBehaviour
 
     Rigidbody2D rb;
     Vector2 movement;
+    float boostTime;
+    float boostMult = 1f;
+
+    public float BoostRemaining => boostTime;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
     }
 
+    public void Boost(float duration, float multiplier)
+    {
+        boostTime = duration;
+        boostMult = multiplier;
+    }
+
     void Update()
     {
         movement = ReadInput();
         if (movement.sqrMagnitude > 1f) movement.Normalize(); // passo 15
+
+        if (boostTime > 0f)
+        {
+            boostTime -= Time.deltaTime;
+            if (boostTime <= 0f) boostMult = 1f;
+        }
     }
 
     void FixedUpdate()
     {
-        rb.linearVelocity = movement * speed;
+        rb.linearVelocity = movement * speed * boostMult;
     }
 
     // Teclado (WASD/setas) + controle Xbox (analógico/d-pad).
@@ -53,6 +69,11 @@ public class PlayerMovement : MonoBehaviour
         {
             amino.collected = true;
             ProteinSynthesis.Instance.OnAminoCollected(amino);
+        }
+        else if (other.TryGetComponent<PowerUp>(out var power) && !power.collected)
+        {
+            power.collected = true;
+            ProteinSynthesis.Instance.OnPowerUp(power);
         }
     }
 }

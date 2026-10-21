@@ -6,22 +6,25 @@ Jogo 2D em Unity 6.3, construído a partir do tutorial "Introdução Rápida".
 **Jogar no navegador:** <link do itch.io>
 
 ## Sobre o jogo
-Você é um **ribossomo** no citoplasma. O HUD mostra a fita de **mRNA** (5' → 3') e a cadeia de
-aminoácidos que ela codifica. Colete os aminoácidos **na ordem certa** para sintetizar a proteína.
-Toda proteína começa com **Met (AUG)**, o códon de início.
+Você é um **ribossomo** no citoplasma. O HUD mostra a fita de **mRNA** (5' → 3') e a cadeia que ela codifica.
+Colete as peças **na ordem certa**: toda proteína começa com **Met (AUG)** e termina com o códon de parada **STOP (UAA)**, que a libera.
 
-| Aminoácido | Códon |
+| Peça | Códon |
 |---|---|
-| Met | AUG |
+| Met (início) | AUG |
 | Gly | GGC |
 | Phe | UUU |
 | Leu | CUG |
 | Ala | GCC |
+| STOP (parada) | UAA |
 
-- **Tempo como mecânica:** o cronômetro é regressivo. Cada proteína completa dá +2 s por aminoácido; aminoácido errado tira 3 s.
-- **Vírus:** patrulham rotas fixas (um fica parado) e tiram 1 vida. Ficam mais rápidos a cada proteína.
-- **Dificuldade:** as proteínas ficam mais longas (3 → 6 aminoácidos).
-- **Fim:** quando o tempo acaba ou as 3 vidas acabam; a tela final mostra proteínas sintetizadas e tempo de sobrevivência.
+- **Tempo como mecânica:** cronômetro regressivo. Proteína completa = +2 s por peça; peça errada = −3 s.
+- **Modo avançado:** a partir da 3ª proteína o HUD mostra só os códons — é preciso lembrar a tabela.
+- **Vírus:** patrulham rotas fixas (um fica parado), tiram 1 vida e aceleram a cada proteína.
+- **Power-ups:** ATP (velocidade por 4 s) e anticorpo (escudo contra 1 vírus).
+- **Feedback:** partículas, textos flutuantes, tremida de câmera e flash de dano; organelas e membrana animadas.
+- **Fim:** tempo zerado ou 3 vidas perdidas. A tela final mostra proteínas, tempo de sobrevivência, última proteína e recorde (salvo no navegador).
+- Botão **Como jogar** no menu com regras e exemplos.
 
 ## Controles
 | Ação | Teclado | Controle (Xbox) |
@@ -38,6 +41,9 @@ Toda proteína começa com **Met (AUG)**, o códon de início.
 - `Assets/Scripts/PlayerHealth.cs` — dano e invencibilidade temporária
 - `Assets/Scripts/Virus.cs` — patrulha entre dois pontos
 - `Assets/Scripts/AminoAcid.cs` — coletável (prefab) e tabela de códons
+- `Assets/Scripts/PowerUp.cs` — power-ups ATP e anticorpo
+- `Assets/Scripts/FX.cs`, `FXParticle.cs`, `FloatingText.cs`, `CameraShake.cs` — feedback visual
+- `Assets/Scripts/Floater.cs`, `MembranePulse.cs` — fundo animado
 - `Assets/Scripts/MenuController.cs` — menu inicial e tela de fim
 - `Assets/Editor/TutorialBuilder.cs` — monta cenas, prefab, sprites, sons e música (menu **Tutorial** no editor)
 - Cenas: `MainMenu` → `Game` → `EndGame`

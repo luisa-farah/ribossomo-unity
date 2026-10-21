@@ -1,11 +1,12 @@
 using UnityEngine;
 
-public enum AminoType { Met, Gly, Phe, Leu, Ala }
+public enum AminoType { Met, Gly, Phe, Leu, Ala, Stop }
 
-// Tabela simplificada do código genético (um códon por aminoácido).
+// Tabela simplificada do código genético (um códon por aminoácido + códon de parada).
 public static class AminoData
 {
-    public static readonly AminoType[] All = { AminoType.Met, AminoType.Gly, AminoType.Phe, AminoType.Leu, AminoType.Ala };
+    public static readonly AminoType[] All = { AminoType.Met, AminoType.Gly, AminoType.Phe, AminoType.Leu, AminoType.Ala, AminoType.Stop };
+    public static readonly AminoType[] Coding = { AminoType.Gly, AminoType.Phe, AminoType.Leu, AminoType.Ala };
 
     public static string Codon(AminoType t) => t switch
     {
@@ -13,7 +14,8 @@ public static class AminoData
         AminoType.Gly => "GGC",
         AminoType.Phe => "UUU",
         AminoType.Leu => "CUG",
-        _ => "GCC",
+        AminoType.Ala => "GCC",
+        _ => "UAA",
     };
 
     public static string Hex(AminoType t) => t switch
@@ -22,8 +24,11 @@ public static class AminoData
         AminoType.Gly => "#4FC3F7",
         AminoType.Phe => "#FFA94D",
         AminoType.Leu => "#F06595",
-        _ => "#FFD43B",
+        AminoType.Ala => "#FFD43B",
+        _ => "#E9ECEF",
     };
+
+    public static string Label(AminoType t) => t == AminoType.Stop ? "STOP" : t.ToString();
 
     public static Color Color(AminoType t)
     {
@@ -32,7 +37,7 @@ public static class AminoData
     }
 }
 
-// Coletável (passo 12/13): prefab com trigger, o tipo define cor e rótulo.
+// Coletável (passos 12/13): prefab com trigger; o tipo define cor e rótulo.
 public class AminoAcid : MonoBehaviour
 {
     public AminoType type;
@@ -54,12 +59,15 @@ public class AminoAcid : MonoBehaviour
     {
         type = t;
         GetComponent<SpriteRenderer>().color = AminoData.Color(t);
-        if (label != null) label.text = t.ToString();
+        if (label != null)
+        {
+            label.text = AminoData.Label(t);
+            label.characterSize = t == AminoType.Stop ? 0.042f : 0.055f;
+        }
     }
 
     void Update()
     {
-        // leve "respiração" para dar vida ao coletável
         float s = 1f + 0.06f * Mathf.Sin((Time.time + phase) * 3f);
         transform.localScale = baseScale * s;
     }

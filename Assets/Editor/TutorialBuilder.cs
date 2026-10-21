@@ -28,8 +28,8 @@ public static class TutorialBuilder
 
     class Assets_
     {
-        public Sprite circle, square, ribosome, amino, virus;
-        public AudioClip collect, wrong, protein, hit, end, music;
+        public Sprite circle, square, ribosome, amino, virus, atp, antibody, ring;
+        public AudioClip collect, wrong, protein, hit, end, music, powerUp, shield;
     }
 
     [MenuItem("Tutorial/1. Montar projeto")]
@@ -48,6 +48,11 @@ public static class TutorialBuilder
             ribosome = MakeSprite("Assets/Sprites/Ribossomo.png", 128, RibosomeShape),
             amino = MakeSprite("Assets/Sprites/Aminoacido.png", 128, AminoShape),
             virus = MakeSprite("Assets/Sprites/Virus.png", 128, VirusShape),
+            atp = MakeSprite("Assets/Sprites/ATP.png", 128, StarShape),
+            antibody = MakeSprite("Assets/Sprites/Anticorpo.png", 128, AntibodyShape),
+            ring = MakeSprite("Assets/Sprites/Anel.png", 128, RingShape),
+            powerUp = WriteWav("Assets/Audio/powerup.wav", SfxPowerUp()),
+            shield = WriteWav("Assets/Audio/escudo.wav", SfxShield()),
             collect = WriteWav("Assets/Audio/coletar.wav", SfxCollect()),
             wrong = WriteWav("Assets/Audio/errado.wav", SfxWrong()),
             protein = WriteWav("Assets/Audio/proteina.wav", SfxProtein()),
@@ -57,7 +62,8 @@ public static class TutorialBuilder
         };
 
         var prefab = MakeAminoPrefab(a);
-        BuildGameScene(a, prefab);
+        var powerPrefab = MakePowerUpPrefab(a);
+        BuildGameScene(a, prefab, powerPrefab);
         BuildMenuScene(a, "Assets/Scenes/MainMenu.unity", false);
         BuildMenuScene(a, "Assets/Scenes/EndGame.unity", true);
 
@@ -93,10 +99,13 @@ public static class TutorialBuilder
 
     // ================= Cenas =================
 
-    static void BuildGameScene(Assets_ a, AminoAcid prefab)
+    static void BuildGameScene(Assets_ a, AminoAcid prefab, PowerUp powerPrefab)
     {
         var scene = NewSceneFromSample("Assets/Scenes/Game.unity");
         Decor(a);
+        Camera.main.gameObject.AddComponent<CameraShake>();
+        var fx = new GameObject("FX").AddComponent<FX>();
+        fx.dot = a.circle; fx.font = UIFont;
 
         // Membrana celular (paredes) — passo 8
         MakeWall(a, "Membrana Topo", new Vector2(0, 3.45f), new Vector2(15f, 0.3f));
@@ -117,7 +126,13 @@ public static class TutorialBuilder
         rb.sleepMode = RigidbodySleepMode2D.NeverSleep;
         player.AddComponent<CircleCollider2D>().radius = 0.42f;
         player.AddComponent<PlayerMovement>();
-        player.AddComponent<PlayerHealth>();
+        var health = player.AddComponent<PlayerHealth>();
+        var ring = new GameObject("Escudo (anticorpo)");
+        ring.transform.SetParent(player.transform, false);
+        ring.transform.localScale = Vector3.one * 1.35f;
+        var rsr = ring.AddComponent<SpriteRenderer>();
+        rsr.sprite = a.ring; rsr.color = new Color(0.45f, 0.88f, 1f, 0.9f); rsr.sortingOrder = 6;
+        health.shieldRing = ring;
 
         // Inimigos: vírus
         var viruses = new List<Virus>
@@ -143,12 +158,24 @@ public static class TutorialBuilder
         var mrnaText = MakeText(canvas, "mRNA", "", 18, TextAnchor.UpperCenter, new Vector2(0.5f, 1), new Vector2(0, -38), new Vector2(860, 24));
         var chainText = MakeText(canvas, "Cadeia", "", 19, TextAnchor.UpperCenter, new Vector2(0.5f, 1), new Vector2(0, -59), new Vector2(860, 24));
 
+        var statusText = MakeText(canvas, "Status", "", 15, TextAnchor.LowerLeft, new Vector2(0, 0), new Vector2(26, 3), new Vector2(700, 22));
+        var flashGo = new GameObject("Flash de dano", typeof(RectTransform));
+        flashGo.transform.SetParent(canvas, false);
+        var frt = (RectTransform)flashGo.transform;
+        frt.anchorMin = Vector2.zero; frt.anchorMax = Vector2.one; frt.offsetMin = Vector2.zero; frt.offsetMax = Vector2.zero;
+        var flash = flashGo.AddComponent<Image>();
+        flash.color = new Color(1f, 0.15f, 0.2f, 0f); flash.raycastTarget = false;
+
         // Controlador + áudio
         var ctrlGo = new GameObject("ProteinSynthesis (GameController)");
         var ctrl = ctrlGo.AddComponent<ProteinSynthesis>();
         var sfx = ctrlGo.AddComponent<AudioSource>();
         sfx.playOnAwake = false;
         ctrl.aminoPrefab = prefab;
+        ctrl.powerUpPrefab = powerPrefab;
+        ctrl.statusText = statusText;
+        ctrl.damageFlash = flash;
+        ctrl.powerUpClip = a.powerUp; ctrl.shieldClip = a.shield;
         ctrl.player = player.transform;
         ctrl.spawnArea = SpawnArea;
         ctrl.viruses = viruses.ToArray();
@@ -181,13 +208,14 @@ public static class TutorialBuilder
 
         if (isEnd)
         {
-            MakeText(canvas, "Titulo", "Fim de Jogo!", 54, TextAnchor.MiddleCenter, new Vector2(0.5f, 0.5f), new Vector2(0, 60), new Vector2(800, 80));
-            ctrl.reasonText = MakeText(canvas, "Motivo", "", 24, TextAnchor.MiddleCenter, new Vector2(0.5f, 0.5f), new Vector2(0, 8), new Vector2(800, 36));
+            MakeText(canvas, "Titulo", "Fim de Jogo!", 54, TextAnchor.MiddleCenter, new Vector2(0.5f, 0.5f), new Vector2(0, 75), new Vector2(800, 80));
+            ctrl.reasonText = MakeText(canvas, "Motivo", "", 24, TextAnchor.MiddleCenter, new Vector2(0.5f, 0.5f), new Vector2(0, 25), new Vector2(800, 36));
             ctrl.reasonText.color = new Color(1f, 0.55f, 0.55f);
-            ctrl.resultText = MakeText(canvas, "Resultado", "", 24, TextAnchor.MiddleCenter, new Vector2(0.5f, 0.5f), new Vector2(0, -48), new Vector2(800, 70));
-            var again = MakeButton(canvas, a.square, "Jogar de novo", new Vector2(-140, -150));
+            ctrl.resultText = MakeText(canvas, "Resultado", "", 22, TextAnchor.MiddleCenter, new Vector2(0.5f, 0.5f), new Vector2(0, -40), new Vector2(800, 90));
+            ctrl.recordText = MakeText(canvas, "Recorde", "", 24, TextAnchor.MiddleCenter, new Vector2(0.5f, 0.5f), new Vector2(0, -105), new Vector2(800, 34));
+            var again = MakeButton(canvas, a.square, "Jogar de novo", new Vector2(-140, -175));
             UnityEventTools.AddPersistentListener(again.onClick, ctrl.Play);
-            var menu = MakeButton(canvas, a.square, "Menu", new Vector2(140, -150));
+            var menu = MakeButton(canvas, a.square, "Menu", new Vector2(140, -175));
             UnityEventTools.AddPersistentListener(menu.onClick, ctrl.Menu);
             MakeEventSystem(again.gameObject);
         }
@@ -205,6 +233,8 @@ public static class TutorialBuilder
             var how = MakeButton(canvas, a.square, "Como jogar", new Vector2(135, -110));
             how.GetComponent<Image>().color = new Color(0.31f, 0.76f, 0.97f);
             UnityEventTools.AddPersistentListener(how.onClick, ctrl.ShowHowTo);
+            ctrl.recordText = MakeText(canvas, "Recorde", "", 18, TextAnchor.MiddleCenter, new Vector2(0.5f, 0.5f), new Vector2(0, -165), new Vector2(860, 26));
+            ctrl.recordText.color = new Color(1f, 0.83f, 0.23f);
             MakeText(canvas, "Controles",
                 "Mover: WASD / setas / controle      R / Select: reiniciar      Esc / Start: menu",
                 16, TextAnchor.MiddleCenter, new Vector2(0.5f, 0.5f), new Vector2(0, -200), new Vector2(860, 30));
@@ -218,7 +248,7 @@ public static class TutorialBuilder
             panel.AddComponent<Image>().color = new Color(0.04f, 0.05f, 0.10f, 1f);
             var pt = panel.transform;
 
-            string C(AminoType t) => $"<color={AminoData.Hex(t)}><b>{t}</b></color>";
+            string C(AminoType t) => $"<color={AminoData.Hex(t)}><b>{AminoData.Label(t)}</b></color>";
             const string ok = "<color=#5BD98A><b>✓</b></color>";
             const string no = "<color=#FF6B6B><b>✗</b></color>";
 
@@ -226,11 +256,11 @@ public static class TutorialBuilder
                 new Vector2(0.5f, 1), new Vector2(0, -40), new Vector2(860, 50));
 
             var rules =
-                $"1.  Toda proteína começa com {C(AminoType.Met)} — o códon de início <b>AUG</b>.\n" +
-                "2.  Leia o mRNA no topo da tela da esquerda (5') para a direita (3'): cada códon = 1 aminoácido.\n" +
-                "3.  Colete na ordem. O próximo aminoácido aparece destacado entre [colchetes].\n" +
+                $"1.  Toda proteína começa com {C(AminoType.Met)} (AUG) e termina com {C(AminoType.Stop)} (UAA), que a libera.\n" +
+                "2.  Leia o mRNA no topo da tela da esquerda (5') para a direita (3'): cada códon = 1 peça.\n" +
+                "3.  Colete na ordem. A próxima peça aparece destacada entre [colchetes].\n" +
                 "4.  Errou a ordem? Perde 3 s, mas a proteína não recomeça — continue do mesmo ponto.\n" +
-                "5.  Proteína pronta = +2 s por aminoácido. As próximas ficam mais longas (até 6).";
+                "5.  Proteína pronta = +2 s por peça. Da 3ª em diante o HUD mostra só os códons: decore a tabela!";
             var rt = MakeText(pt, "Regras", rules, 18, TextAnchor.UpperLeft,
                 new Vector2(0.5f, 1), new Vector2(0, -85), new Vector2(800, 150));
             rt.lineSpacing = 1.25f;
@@ -241,17 +271,17 @@ public static class TutorialBuilder
                 new Vector2(0.5f, 1), new Vector2(0, -250), new Vector2(860, 28));
 
             var examples =
-                $"{ok}  AUG · GGC · UUU          →  {C(AminoType.Met)} → {C(AminoType.Gly)} → {C(AminoType.Phe)}\n" +
-                $"{ok}  AUG · CUG · GCC · GGC  →  {C(AminoType.Met)} → {C(AminoType.Leu)} → {C(AminoType.Ala)} → {C(AminoType.Gly)}\n" +
-                $"{no}  GGC · AUG · UUU          →  não começa com {C(AminoType.Met)}\n" +
-                $"{no}  pegar {C(AminoType.Phe)} quando o próximo é [{C(AminoType.Gly)}]  →  fora de ordem (−3 s)";
+                $"{ok}  AUG · GGC · UAA                →  {C(AminoType.Met)} → {C(AminoType.Gly)} → {C(AminoType.Stop)}\n" +
+                $"{ok}  AUG · CUG · GCC · UAA        →  {C(AminoType.Met)} → {C(AminoType.Leu)} → {C(AminoType.Ala)} → {C(AminoType.Stop)}\n" +
+                $"{no}  AUG · GGC · UUU                →  sem {C(AminoType.Stop)}, a proteína não é liberada\n" +
+                $"{no}  GGC · AUG · UAA                →  não começa com {C(AminoType.Met)}";
             MakeText(pt, "Exemplos Titulo", "Exemplos", 22, TextAnchor.MiddleCenter,
                 new Vector2(0.5f, 1), new Vector2(0, -292), new Vector2(860, 30));
             var ex = MakeText(pt, "Exemplos", examples, 18, TextAnchor.UpperLeft,
                 new Vector2(0.5f, 1), new Vector2(0, -320), new Vector2(620, 120));
             ex.lineSpacing = 1.3f;
 
-            MakeText(pt, "Dica", "Cuidado com os vírus: cada toque tira 1 vida ♥ — e eles aceleram a cada proteína.", 16,
+            MakeText(pt, "Dica", "Vírus tiram 1 vida ♥ e aceleram a cada proteína.   Power-ups: ATP = velocidade · Anticorpo = escudo.", 16,
                 TextAnchor.MiddleCenter, new Vector2(0.5f, 1), new Vector2(0, -455), new Vector2(860, 26)).color = new Color(1f, 0.75f, 0.75f);
 
             var back = MakeButton(pt, a.square, "Voltar", new Vector2(0, -230));
@@ -295,6 +325,8 @@ public static class TutorialBuilder
             g.transform.localScale = new Vector3(s.x, s.y, 1);
             var r = g.AddComponent<SpriteRenderer>();
             r.sprite = a.circle; r.color = c; r.sortingOrder = -10;
+            var f = g.AddComponent<Floater>();
+            f.amplitude = Mathf.Clamp(s.x * 0.08f, 0.1f, 0.4f);
         }
         Blob(new Vector2(-8.5f, -5.5f), new Vector2(9f, 9f), new Color(0.45f, 0.30f, 0.75f, 0.05f)); // núcleo
         Blob(new Vector2(5.2f, 1.9f), new Vector2(3.2f, 1.4f), new Color(1f, 0.55f, 0.30f, 0.025f));   // mitocôndria
@@ -312,6 +344,7 @@ public static class TutorialBuilder
         w.transform.position = pos;
         w.transform.localScale = new Vector3(size.x, size.y, 1);
         w.AddComponent<BoxCollider2D>();
+        w.AddComponent<MembranePulse>();
     }
 
     static Virus MakeVirus(Assets_ a, string name, Vector2 from, Vector2 to, float speed)
@@ -357,6 +390,21 @@ public static class TutorialBuilder
         var prefab = PrefabUtility.SaveAsPrefabAsset(go, "Assets/Prefabs/Aminoacido.prefab");
         Object.DestroyImmediate(go);
         return prefab.GetComponent<AminoAcid>();
+    }
+
+    static PowerUp MakePowerUpPrefab(Assets_ a)
+    {
+        var go = new GameObject("PowerUp");
+        go.transform.localScale = Vector3.one * 0.75f;
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = a.atp; sr.sortingOrder = 3;
+        var col = go.AddComponent<CircleCollider2D>();
+        col.isTrigger = true; col.radius = 0.45f;
+        var pu = go.AddComponent<PowerUp>();
+        pu.atpSprite = a.atp; pu.antibodySprite = a.antibody;
+        var prefab = PrefabUtility.SaveAsPrefabAsset(go, "Assets/Prefabs/PowerUp.prefab");
+        Object.DestroyImmediate(go);
+        return prefab.GetComponent<PowerUp>();
     }
 
     static void MakeMusic(Assets_ a)
@@ -483,6 +531,41 @@ public static class TutorialBuilder
         return (0f, 0f);
     }
 
+    static (float, float) StarShape(float x, float y)
+    {
+        // estrela de 6 pontas (molécula de energia ATP estilizada)
+        var p = new Vector2(x, y) - new Vector2(0.5f, 0.5f);
+        float ang = Mathf.Atan2(p.y, p.x);
+        float r = 0.3f + 0.16f * Mathf.Cos(ang * 6f);
+        float d = p.magnitude;
+        if (d > r) return (0f, 0f);
+        return (d > r - 0.05f ? 0.6f : 1f, 1f);
+    }
+
+    static float SegDist(Vector2 p, Vector2 a, Vector2 b)
+    {
+        var ab = b - a;
+        float t = Mathf.Clamp01(Vector2.Dot(p - a, ab) / ab.sqrMagnitude);
+        return Vector2.Distance(p, a + ab * t);
+    }
+
+    static (float, float) AntibodyShape(float x, float y)
+    {
+        // anticorpo em "Y"
+        var p = new Vector2(x, y);
+        var c = new Vector2(0.5f, 0.45f);
+        float d = Mathf.Min(SegDist(p, new Vector2(0.5f, 0.1f), c),
+                  Mathf.Min(SegDist(p, c, new Vector2(0.2f, 0.85f)), SegDist(p, c, new Vector2(0.8f, 0.85f))));
+        if (d > 0.1f) return (0f, 0f);
+        return (d > 0.07f ? 0.6f : 1f, 1f);
+    }
+
+    static (float, float) RingShape(float x, float y)
+    {
+        float d = Vector2.Distance(new Vector2(x, y), new Vector2(0.5f, 0.5f));
+        return Mathf.Abs(d - 0.44f) < 0.035f ? (1f, 1f) : (0f, 0f);
+    }
+
     static Sprite MakeSprite(string path, int size, Func<float, float, (float, float)> shape)
     {
         var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
@@ -531,6 +614,9 @@ public static class TutorialBuilder
     static float[] SfxCollect() => Tone(new[] { Midi(79), Midi(84) }, 0.07f, 0.35f, Sq, 14f);
     static float[] SfxProtein() => Tone(new[] { Midi(72), Midi(76), Midi(79), Midi(84), Midi(88) }, 0.08f, 0.35f, Sq, 6f);
     static float[] SfxEnd() => Tone(new[] { Midi(67), Midi(63), Midi(60), Midi(55) }, 0.16f, 0.35f, Tri, 3f);
+
+    static float[] SfxPowerUp() => Tone(new[] { Midi(67), Midi(71), Midi(74), Midi(79), Midi(83), Midi(86) }, 0.05f, 0.3f, Tri, 4f);
+    static float[] SfxShield() => Tone(new[] { Midi(88), Midi(81), Midi(76) }, 0.07f, 0.3f, Sq, 8f);
 
     static float[] SfxWrong()
     {
