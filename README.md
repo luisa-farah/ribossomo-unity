@@ -19,7 +19,7 @@ Colete as peças **na ordem certa**: toda proteína começa com **Met (AUG)** e 
 | STOP (parada) | UAA |
 
 - **Tempo como mecânica:** cronômetro regressivo. Proteína completa = +2 s por peça; peça errada = −3 s.
-- **Modo avançado:** a partir da 3ª proteína o HUD mostra só os códons — é preciso lembrar a tabela.
+- **Modo avançado:** a partir da 6ª proteína o HUD mostra só os códons — é preciso lembrar a tabela.
 - **Vírus:** patrulham rotas fixas (um fica parado), tiram 1 vida e aceleram a cada proteína.
 - **Power-ups:** ATP (velocidade por 4 s) e anticorpo (escudo contra 1 vírus).
 - **Feedback:** partículas, textos flutuantes, tremida de câmera e flash de dano; organelas e membrana animadas.

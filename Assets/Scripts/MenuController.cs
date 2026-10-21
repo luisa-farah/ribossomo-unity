@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 // Usado no Menu Inicial (com painel "Como jogar" e recorde) e na tela de Fim de Jogo.
@@ -37,6 +38,17 @@ public class MenuController : MonoBehaviour
             else
                 recordText.text = "";
         }
+    }
+
+    void Update()
+    {
+        // fecha o painel "Como jogar" com Esc / Backspace / botão B do controle
+        if (howToPanel == null || !howToPanel.activeSelf) return;
+        var kb = Keyboard.current;
+        var gp = Gamepad.current;
+        if ((kb != null && (kb.escapeKey.wasPressedThisFrame || kb.backspaceKey.wasPressedThisFrame)) ||
+            (gp != null && gp.buttonEast.wasPressedThisFrame))
+            HideHowTo();
     }
 
     public void Play() => GameManager.LoadGame();

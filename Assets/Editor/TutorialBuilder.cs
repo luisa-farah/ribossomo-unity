@@ -260,7 +260,7 @@ public static class TutorialBuilder
                 "2.  Leia o mRNA no topo da tela da esquerda (5') para a direita (3'): cada códon = 1 peça.\n" +
                 "3.  Colete na ordem. A próxima peça aparece destacada entre [colchetes].\n" +
                 "4.  Errou a ordem? Perde 3 s, mas a proteína não recomeça — continue do mesmo ponto.\n" +
-                "5.  Proteína pronta = +2 s por peça. Da 3ª em diante o HUD mostra só os códons: decore a tabela!";
+                "5.  Proteína pronta = +2 s por peça. Da 6ª em diante o HUD mostra só os códons: decore a tabela!";
             var rt = MakeText(pt, "Regras", rules, 18, TextAnchor.UpperLeft,
                 new Vector2(0.5f, 1), new Vector2(0, -85), new Vector2(800, 150));
             rt.lineSpacing = 1.25f;
@@ -284,7 +284,7 @@ public static class TutorialBuilder
             MakeText(pt, "Dica", "Vírus tiram 1 vida ♥ e aceleram a cada proteína.   Power-ups: ATP = velocidade · Anticorpo = escudo.", 16,
                 TextAnchor.MiddleCenter, new Vector2(0.5f, 1), new Vector2(0, -455), new Vector2(860, 26)).color = new Color(1f, 0.75f, 0.75f);
 
-            var back = MakeButton(pt, a.square, "Voltar", new Vector2(0, -230));
+            var back = MakeButton(pt, a.square, "Voltar (Esc)", new Vector2(0, -230));
             UnityEventTools.AddPersistentListener(back.onClick, ctrl.HideHowTo);
 
             ctrl.howToPanel = panel;

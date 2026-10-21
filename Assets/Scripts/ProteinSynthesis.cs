@@ -25,7 +25,7 @@ public class ProteinSynthesis : MonoBehaviour
 
     [Header("Dificuldade")]
     [Tooltip("A partir de quantas proteínas o HUD mostra só os códons")]
-    public int codonsOnlyFrom = 2;
+    public int codonsOnlyFrom = 5; // 6ª proteína em diante
     public float powerUpInterval = 11f;
     public float boostDuration = 4f;
     public float boostMultiplier = 1.6f;
